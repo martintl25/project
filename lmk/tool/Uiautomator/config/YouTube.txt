@@ -1,0 +1,7 @@
+google code jam
+codeforces
+dynamic programming
+binary tree
+fenwick tree
+icpc
+segment tree

@@ -1,0 +1,21 @@
+[
+    ["Facebook", 3, 2],
+    ["Reddit", 3, 2],
+    ["Twitter", 3, 2],
+    ["Chrome", 3, 6],
+    ["Firefox", 3, 2],
+    ["Angry Birds 2", 3, 2],
+    ["Candy Crush", 3, 2],
+    ["YouTube", 3, 2],
+    ["TikTok", 3, 2],
+    ["Telegram", 3, 2],
+    ["Messenger", 3, 2],
+    ["MoPTT", 3, 2],
+    ["Instagram", 3, 2],
+    ["Cookie Run", 3, 2],
+    ["Gmail", 3, 2],
+    ["Maps", 3, 2],
+    ["Zombie", 3, 2],
+    ["Homescapes", 3, 2],
+    ["Attack", 3, 2]
+]
