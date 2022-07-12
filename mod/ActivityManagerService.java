@@ -20307,8 +20307,8 @@ public final class ActivityManagerService extends ActivityManagerNative
         app.curProcState = procState;
         app.foregroundActivities = foregroundActivities;
 
-        //if(app == TOP_APP && (preAdj == SERVICE_ADJ || preAdj >= CACHED_APP_MIN_ADJ)){
-        if(app.curAdj == FOREGROUND_APP_ADJ && (preAdj == SERVICE_ADJ || preAdj >= CACHED_APP_MIN_ADJ)){
+        //if(app == TOP_APP && (preAdj == ProcessList.SERVICE_ADJ || preAdj >= ProcessList.CACHED_APP_MIN_ADJ)){
+        if(app.curAdj == ProcessList.FOREGROUND_APP_ADJ && (preAdj == ProcessList.SERVICE_ADJ || preAdj >= ProcessList.CACHED_APP_MIN_ADJ)){
             app.freqBroughtToForeground += 1;
         }
         /* modify: end */
@@ -21256,7 +21256,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         mNumNonCachedProcs = 0;
         mNumCachedHiddenProcs = 0;
 
-        /* insert: begin: Frequency-over-Recency*/
+        /* insert: begin: Frequency-over-Recency */
         ArrayList<Pair<ProcessRecord, Integer>> list
                 = new ArrayList<Pair<ProcessRecord, Integer>>(mLruProcesses.size());
         for (int i=0; i<mLruProcesses.size(); i++) {
@@ -21269,7 +21269,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             public int compare(Pair<ProcessRecord, Integer> object1,
                     Pair<ProcessRecord, Integer> object2) {
                 if (object1.first.freqBroughtToForeground != object2.first.freqBroughtToForeground) {//Frequency
-                    return object1.first.freqBroughtToForeground < object2.freqBroughtToForeground ? -1 : 1;
+                    return object1.first.freqBroughtToForeground < object2.first.freqBroughtToForeground ? -1 : 1;
                 }
                 if (object1.second.intValue() != object2.second.intValue()) {//Recency
                     return object1.second.intValue() < object2.second.intValue() ? -1 : 1;
