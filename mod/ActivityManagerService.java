@@ -19905,7 +19905,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 else if (s.deliveredStarts.size() > 0) {
                     mayRestartServiceAfterKilled = true;
                 }
-                else (s.bindings.size() > 0) {
+                else if (s.bindings.size() > 0) {
                     mayRestartServiceAfterKilled = true;
                 }
                 /* modify end */
@@ -21373,7 +21373,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     else if (sr.deliveredStarts.size() > 0) {
                         mayRestartServiceAfterKilled = true;
                     }
-                    else (sr.bindings.size() > 0) {
+                    else if (sr.bindings.size() > 0) {
                         mayRestartServiceAfterKilled = true;
                     }
                     if (serviceLastActivity == 0 && !mayRestartServiceAfterKilled) {
