@@ -294,7 +294,7 @@ class Automator:
                 time.sleep(5)
 
                 print('tab select')
-                self.device(resourceId='org.mozilla.firefox:id/tab_item', index=self.fx_cur_tab_idx).click()
+                self.device(resourceId='org.mozilla.firefox:id/tab_tray_grid_item', index=0).click()
                 #if (self.device(resourceId='org.mozilla.firefox:id/tab_item').count > cnt):
                     #self.device(resourceId='org.mozilla.firefox:id/tab_item', index=cnt).click()
                 #    self.device(resourceId='org.mozilla.firefox:id/tab_item', index=self.fx_cur_tab_idx).click()
