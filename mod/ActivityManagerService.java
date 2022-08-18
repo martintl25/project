@@ -21365,13 +21365,25 @@ public final class ActivityManagerService extends ActivityManagerNative
                         }
                         continue;
                     }
-                    if (serviceLastActivity == 0) {
+                    boolean mayRestartServiceAfterKilled = false;
+                    /* modify begin : recurring services problem */
+                    if(!sr.stopIfKilled) {
+                        mayRestartServiceAfterKilled = true;
+                    }
+                    else if (sr.deliveredStarts.size() > 0) {
+                        mayRestartServiceAfterKilled = true;
+                    }
+                    else (sr.bindings.size() > 0) {
+                        mayRestartServiceAfterKilled = true;
+                    }
+                    if (serviceLastActivity == 0 && !mayRestartServiceAfterKilled) {
                         serviceLastActivity = sr.lastActivity;
                         selectedAppRecord = app;
-                    } else if (sr.lastActivity < serviceLastActivity) {
+                    } else if (sr.lastActivity < serviceLastActivity && !mayRestartServiceAfterKilled) {
                         serviceLastActivity = sr.lastActivity;
                         selectedAppRecord = app;
                     }
+                    /* modify end */
                 }
             }
             if (DEBUG_OOM_ADJ && selectedAppRecord != null) Slog.d(TAG,
@@ -21486,7 +21498,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         }
         if ((numBServices > mBServiceAppThreshold) && (true == mAllowLowerMemLevel)
-                && (selectedAppRecord != null) && (selectedAppRecord.restartService == false)) {
+                && (selectedAppRecord != null)) {
             ProcessList.setOomAdj(selectedAppRecord.pid, selectedAppRecord.info.uid,
                     ProcessList.CACHED_APP_MAX_ADJ);
             selectedAppRecord.setAdj = selectedAppRecord.curAdj;
