@@ -401,6 +401,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     private static final String TAG_URI_PERMISSION = TAG + POSTFIX_URI_PERMISSION;
     private static final String TAG_VISIBILITY = TAG + POSTFIX_VISIBILITY;
     private static final String TAG_VISIBLE_BEHIND = TAG + POSTFIX_VISIBLE_BEHIND;
+    private static final String TAG_MY_LMK_PROJECT = TAG + " LMK DEBUG "; /* debug */
 
     // Mock "pretend we're idle now" broadcast action to the job scheduler; declared
     // here so that while the job scheduler can depend on AMS, the other way around
@@ -19887,7 +19888,9 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
 
         boolean mayBeTop = false;
-
+        /* modify begin : recurring services problem */
+        boolean mayRestartServiceAfterKilled = false;
+        /* modify end */
         for (int is = app.services.size()-1;
                 is >= 0 && (adj > ProcessList.FOREGROUND_APP_ADJ
                         || schedGroup == ProcessList.SCHED_GROUP_BACKGROUND
@@ -19895,6 +19898,17 @@ public final class ActivityManagerService extends ActivityManagerNative
                 is--) {
             ServiceRecord s = app.services.valueAt(is);
             if (s.startRequested) {
+                /* modify begin : recurring services problem */
+                if(!s.stopIfKilled) {
+                    mayRestartServiceAfterKilled = true;
+                }
+                else if (s.deliveredStarts.size() > 0) {
+                    mayRestartServiceAfterKilled = true;
+                }
+                else (s.bindings.size() > 0) {
+                    mayRestartServiceAfterKilled = true;
+                }
+                /* modify end */
                 app.hasStartedServices = true;
                 if (procState > ActivityManager.PROCESS_STATE_SERVICE) {
                     procState = ActivityManager.PROCESS_STATE_SERVICE;
@@ -20249,6 +20263,14 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         }
 
+        /* modify begin : recurring services problem */
+        if (mayRestartServiceAfterKilled && adj > ProcessList.SERVICE_ADJ) {
+            adj = ProcessList.SERVICE_ADJ;
+            app.adjType = "started-services";
+            app.cached = false;
+        }
+        /* modify end */
+
         if (adj == ProcessList.SERVICE_ADJ) {
             if (doingAll) {
                 app.serviceb = mNewNumAServiceProcs > (mNumServiceProcs/3);
@@ -20308,7 +20330,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         app.foregroundActivities = foregroundActivities;
 
         //if(app == TOP_APP && (preAdj == ProcessList.SERVICE_ADJ || preAdj >= ProcessList.CACHED_APP_MIN_ADJ)){
-        if(app.curAdj == ProcessList.FOREGROUND_APP_ADJ && (preAdj == ProcessList.SERVICE_ADJ || preAdj >= ProcessList.CACHED_APP_MIN_ADJ)){
+        if(app == TOP_APP && (preAdj == ProcessList.SERVICE_ADJ || preAdj >= ProcessList.CACHED_APP_MIN_ADJ)){
             app.freqBroughtToForeground += 1;
         }
         /* modify: end */
@@ -21280,6 +21302,35 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         Collections.sort(list, comparator);
         /* insert: end */
+        /* debug: begin */
+        for (int i=N-1; i>=0; i--) {
+            ProcessRecord app = list.get(i).first;
+            for (int is=0; is<app.services.size(); is++) {
+                ServiceRecord sr = app.services.valueAt(is);
+                for (int iib=0; iib<sr.bindings.size(); iib++) {
+                    IntentBindRecord ibr = sr.bindings.valueAt(iib);
+                    for (int iab=0; iab<ibr.apps.size(); iab++ ) {
+                        AppBindRecord abr = ibr.apps.valueAt(iab);
+                        if (abr.client == app) {
+                            Slog.d(TAG_MY_LMK_PROJECT, " Service: app \"" + abr.client.processName +"\"(pid:" + abr.client.pid + ") bind service FROM \"" + sr.processName + "\" itself");
+                        }
+                        else {
+                            Slog.d(TAG_MY_LMK_PROJECT, " Service: app \"" + abr.client.processName +"\"(pid:" + abr.client.pid + ") bind service FROM \"" + sr.processName + "\"(pid:" + sr.app.pid + ") app.isolated=" + app.isolated);
+                        }
+                    }
+                }
+            }
+            for (int conni=0; conni<s.connections.size(); conni++) {
+                ConnectionRecord cr = app.connections.valueAt(conni);
+                if(cr.binding.client == app) {
+                    Slog.d(TAG_MY_LMK_PROJECT, " Connection: app \"" + cr.binding.client.processName +"\"(pid:" + cr.binding.client.pid + ") connect with itself");
+                }
+                else {
+                    Slog.d(TAG_MY_LMK_PROJECT, " Connection: app \"" + cr.binding.client.processName +"\"(pid:" + cr.binding.client.pid + ") connect with app \"" + app.processName +"\"(pid:" + app.pid + ")");
+                }
+            }
+        }
+        /* debug: end */
 
         // First update the OOM adjustment for each of the
         // application processes based on their current state.
@@ -21291,7 +21342,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         long serviceLastActivity = 0;
         int numBServices = 0;
         for (int i=N-1; i>=0; i--) {
-            /* modify: begin: Frequency-over-Recency*/
+            /* modify: begin: Frequency-over-Recency */
             // orig: ProcessRecord app = mLruProcesses.get(i);
             ProcessRecord app = list.get(i).first;
             /* modify: end */
@@ -21435,7 +21486,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         }
         if ((numBServices > mBServiceAppThreshold) && (true == mAllowLowerMemLevel)
-                && (selectedAppRecord != null)) {
+                && (selectedAppRecord != null) && (selectedAppRecord.restartService == false)) {
             ProcessList.setOomAdj(selectedAppRecord.pid, selectedAppRecord.info.uid,
                     ProcessList.CACHED_APP_MAX_ADJ);
             selectedAppRecord.setAdj = selectedAppRecord.curAdj;
